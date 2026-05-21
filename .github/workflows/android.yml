@@ -37,19 +37,13 @@ jobs:
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 --decode > keystore.jks
           ls -la keystore.jks
 
-      # 关键修改：通过全局配置禁用 Lint，避免任务名歧义
-      - name: Build & Sign APK (Skip All Lint)
+      - name: Build & Sign APK
         run: ./gradlew clean assembleRelease --no-build-cache
         env:
           ANDROID_KEYSTORE_FILE: keystore.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
-          # 全局禁用 Lint 检查
-          LINT_OPTIONS_DISABLE=true
-          ANDROID_LINT_CHECK_ALL=false
-          ANDROID_LINT_ABORT_ON_ERROR=false
-          ANDROID_LINT_ABORT_ON_WARNING=false
 
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
