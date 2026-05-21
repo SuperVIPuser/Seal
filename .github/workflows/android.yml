@@ -8,9 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      # 强制统一SDK路径，清除冲突变量
-      ANDROID_HOME: ${{ runner.tool_cache }}/android-sdk
-      ANDROID_SDK_ROOT: ${{ runner.tool_cache }}/android-sdk
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,11 +24,13 @@ jobs:
           sudo apt-get install -y wget unzip
           wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
           unzip -q cmdline-tools.zip -d cmdline-tools
-          mkdir -p $ANDROID_HOME/cmdline-tools/latest
-          mv cmdline-tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
-          echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH" >> $GITHUB_PATH
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
+          mkdir -p ~/android-sdk/cmdline-tools/latest
+          mv cmdline-tools/cmdline-tools/* ~/android-sdk/cmdline-tools/latest/
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_PATH
+          yes | ~/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
       - name: Decode signing keystore
         run: |
