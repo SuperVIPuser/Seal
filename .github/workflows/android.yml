@@ -8,38 +8,36 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      # 强制统一SDK路径，清除冲突变量
+      ANDROID_HOME: ${{ runner.tool_cache }}/android-sdk
+      ANDROID_SDK_ROOT: ${{ runner.tool_cache }}/android-sdk
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. 升级到项目要求的 JDK 21
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      # 2. 安装 Android SDK 工具
       - name: Install Android SDK Tools
         run: |
           sudo apt-get update
           sudo apt-get install -y wget unzip
           wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
           unzip -q cmdline-tools.zip -d cmdline-tools
-          mkdir -p ~/android-sdk/cmdline-tools/latest
-          mv cmdline-tools/cmdline-tools/* ~/android-sdk/cmdline-tools/latest/
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
-          yes | ~/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-          ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
+          mkdir -p $ANDROID_HOME/cmdline-tools/latest
+          mv cmdline-tools/cmdline-tools/* $ANDROID_HOME/cmdline-tools/latest/
+          echo "PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH" >> $GITHUB_PATH
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
 
-      # 3. 解码你的签名密钥（保持原变量名不变）
       - name: Decode signing keystore
         run: |
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 --decode > keystore.jks
           ls -la keystore.jks
 
-      # 4. 构建并签名 APK
       - name: Build & Sign APK
         run: ./gradlew clean assembleRelease --no-build-cache
         env:
@@ -48,7 +46,6 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
 
-      # 5. 上传签名后的 APK
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
