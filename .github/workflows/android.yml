@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      # 关键：为Gradle进程分配4G堆内存，解决OOM问题
+      GRADLE_OPTS: "-Xmx4g -Xms512m"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
