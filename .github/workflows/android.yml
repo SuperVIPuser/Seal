@@ -45,12 +45,19 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
 
+      # 关键修改：列出所有APK文件，确认路径
+      - name: List all generated APK files
+        run: |
+          echo "Searching for APK files..."
+          find . -name "*.apk" -type f
+          echo "APK files found:"
+          ls -laR app/build/outputs/apk/
+
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
           name: Seal-Signed-APK
-          path: app/build/outputs/apk/release/*.apk
+          path: |
+            ./app/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 30
-
-
