@@ -17,11 +17,10 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Setup Android SDK
+      - name: Install Android SDK
         uses: android-actions/setup-android@v3
         with:
-          api-level: 34
-          build-tools: 34.0.0
+          cmdline-tools-version: 'latest'
 
       - name: Decode signing keystore
         run: |
@@ -30,15 +29,12 @@ jobs:
           keytool -list -keystore keystore.jks -storepass "${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}" 2>&1 || true
 
       - name: Build & Sign APK
-        uses: gradle/gradle-build-action@v3
+        run: ./gradlew clean assembleRelease --no-build-cache
         env:
           ANDROID_KEYSTORE_FILE: keystore.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
-        with:
-          arguments: clean assembleRelease --no-build-cache
-          cache-disabled: true
 
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
