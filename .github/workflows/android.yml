@@ -1,4 +1,4 @@
-name: Build Release APK (arm64 only)
+name: Build Release APK
 
 on:
   workflow_dispatch:
@@ -8,8 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      # 关键：为Gradle进程分配4G堆内存，解决OOM问题
-      GRADLE_OPTS: "-Xmx4g -Xms512m"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,23 +37,27 @@ jobs:
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 --decode > keystore.jks
           ls -la keystore.jks
 
-      - name: Build & Sign APK (arm64 only)
-        run: ./gradlew clean assembleRelease -PabiFilters=arm64-v8a --no-build-cache
+      - name: Build & Sign APK
+        run: ./gradlew clean assembleRelease --no-build-cache
         env:
           ANDROID_KEYSTORE_FILE: keystore.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
 
-      - name: List generated APK files
+      # 关键修改：列出所有APK文件，确认路径
+      - name: List all generated APK files
         run: |
-          find . -name "*arm64-v8a*.apk" -type f
+          echo "Searching for APK files..."
+          find . -name "*.apk" -type f
+          echo "APK files found:"
           ls -laR app/build/outputs/apk/
 
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Seal-arm64-Signed-APK
-          path: ./app/build/outputs/apk/**/*arm64-v8a*.apk
+          name: Seal-Signed-APK
+          path: |
+            ./app/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 30
